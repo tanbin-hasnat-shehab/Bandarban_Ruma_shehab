@@ -121,7 +121,7 @@ if edit:
         st.write(f'nn={nn} name={name}')
         request1 = sheet.values().update(spreadsheetId=SAMPLE_SPREADSHEET_ID, range=f'ss!{cell_names[del_date-1]}{nn+2}', valueInputOption='USER_ENTERED', body={'values':[[no_of_meal]]})
         response1 = request1.execute()
-        st.write(f'ss!{cell_names[del_date-1]}{nn+2}')
+        
 
 
 
