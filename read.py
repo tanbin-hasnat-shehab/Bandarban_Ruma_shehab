@@ -3,6 +3,19 @@ import streamlit as st
 from googleapiclient.discovery import build
 #from googleapiclient.errors import HttpError
 from google.oauth2 import service_account
+from datetime import date
+
+today = date.today()
+
+# dd/mm/YY
+today_date = today.strftime("%d")
+cell_names1=['H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','AA','AB','AC','AD','AE','AF','AG','AH','AI','AJ','AK','AL','AM', 'AN', 'AO', 'AP', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AV', 'AW', 'AX', 'AY', 'AZ','BA', 'BB', 'BC', 'BD', 'BE', 'BF', 'BG', 'BH', 'BI', 'BJ', 'BK', 'BL', 'BM', 'BN', 'BO', 'BP', 'BQ']
+del_date1=int(today_date)
+#{cell_names[(del_date-1)*2]}
+
+
+
+
 SCOPES = ['https://www.googleapis.com/auth/sqlservice.admin']
 SERVICE_ACCOUNT_FILE = 'keys.json'
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
@@ -18,8 +31,21 @@ sheet = service.spreadsheets()
 
 
 daily_m = sheet.values().get(spreadsheetId=SAMPLE_SPREADSHEET_ID,
-                                        range='ss!G2:AL33').execute()
+                                        range=f'ss!G2:BQ33').execute()
 daily_meal_view = daily_m.get('values', [])
+
+
+for_coocker = sheet.values().get(spreadsheetId=SAMPLE_SPREADSHEET_ID,
+                                        range=f'ss!{cell_names1[(del_date1-1)*2]}34:{cell_names1[(del_date1-1)*2+1]}34').execute()
+for_coocker_view = for_coocker.get('values', [])
+f'''
+তারিখ : {del_date1}
+
+দুপুরে মিল সংখ্যা : {for_coocker_view[0][0]}      
+রাতে মিল সংখ্যা : {for_coocker_view[0][1]}
+'''
+#st.write(f'তারিখ : {del_date1}        দুপুরে মিল সংখ্যা : {for_coocker_view[0][0]}      রাতে মিল সংখ্যা : {for_coocker_view[0][1]}')
+
 
 
 daily_m_b = sheet.values().get(spreadsheetId=SAMPLE_SPREADSHEET_ID,
@@ -52,7 +78,7 @@ bazar_code=st.text_input('ম্যনেজার কোড')
 final_cal=st.checkbox('মাস শেষের দেনা পাওনা দেখুন')
 if final_cal:
     f_cals = sheet.values().get(spreadsheetId=SAMPLE_SPREADSHEET_ID,
-                                        range='ss!AQ3:AT33').execute()
+                                        range='ss!BW1:CA33').execute()
     f_cal = f_cals.get('values', [])
     f_dataframe=pd.DataFrame(f_cal)
     st.subheader('দেনা পাওনা')
@@ -73,6 +99,14 @@ if bazar_code=='121':
     daily_bazar_dataframe=pd.DataFrame(daily_bazar_view)
     st.subheader('দৈনিক বাজারের তালিকা')
     st.write(daily_bazar_dataframe)
+
+    bua_bill=st.text_input('বুয়া বিল',500)
+    if bua_bill:
+        request12 = sheet.values().update(spreadsheetId=SAMPLE_SPREADSHEET_ID, range=f'ss!H37', valueInputOption='USER_ENTERED', body={'values':[[bua_bill]]})
+        response12 = request12.execute()
+
+
+
     see_dep=st.checkbox('টাকা জমা দেয়ার তালিকা দেখুন')
     if see_dep:
         deposite_dataframe=pd.DataFrame(deposite_view)
@@ -101,27 +135,43 @@ if bazar_code=='121':
 
 
 
-daily_meal_dataframe=pd.DataFrame(daily_meal_view)
+#daily_meal_dataframe.set_index(daily_meal_dataframe.iloc[1])
+arr=[]
+for i in range(len(daily_meal_view)):
+    arr.append(daily_meal_view[i][0])
+
+daily_meal_dataframe=pd.DataFrame(daily_meal_view,index=arr)
 st.subheader('দৈনিক মিলের তালিকা')
 st.write(daily_meal_dataframe)
+
+
 edit=st.checkbox('EDIT')
 if edit:
     
+    c1,c2,c3,c4=st.beta_columns(4)
+    with c1:
+        name=st.selectbox('নাম',names)
+    
+    with c2:
+        del_date=st.selectbox('তারিখ      ',date_arr)
+        int(del_date)
+        nn=names.index(name)+1
+    
 
-    name=st.selectbox('নাম',names)
-    del_date=st.selectbox('তারিখ      ',date_arr)
-    int(del_date)
-    nn=names.index(name)+1
 
-
-    no_of_meal=st.slider("মিলসংখ্যা", 0, 10, value=0)
-    cell_names=['H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','AA','AB','AC','AD','AE','AF','AG','AH','AI','AJ','AK','AL']
+    with c3:
+        no_of_meal_lunch=st.radio("দুপুরে মিলসংখ্যা",(0,1,2,3,4))
+    with c4:
+        no_of_meal_dinner=st.radio("রাতে মিলসংখ্যা",(0,1,2,3,4))
+    cell_names=['H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','AA','AB','AC','AD','AE','AF','AG','AH','AI','AJ','AK','AL','AM', 'AN', 'AO', 'AP', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AV', 'AW', 'AX', 'AY', 'AZ','BA', 'BB', 'BC', 'BD', 'BE', 'BF', 'BG', 'BH', 'BI', 'BJ', 'BK', 'BL', 'BM', 'BN', 'BO', 'BP', 'BQ']
     up_btn=st.button('update')
     if up_btn:
-        
-        request1 = sheet.values().update(spreadsheetId=SAMPLE_SPREADSHEET_ID, range=f'ss!{cell_names[del_date-1]}{nn+2}', valueInputOption='USER_ENTERED', body={'values':[[no_of_meal]]})
+
+        request1 = sheet.values().update(spreadsheetId=SAMPLE_SPREADSHEET_ID, range=f'ss!{cell_names[(del_date-1)*2]}{nn+2}', valueInputOption='USER_ENTERED', body={'values':[[no_of_meal_lunch]]})
         response1 = request1.execute()
         
+        request11 = sheet.values().update(spreadsheetId=SAMPLE_SPREADSHEET_ID, range=f'ss!{cell_names[(del_date-1)*2+1]}{nn+2}', valueInputOption='USER_ENTERED', body={'values':[[no_of_meal_dinner]]})
+        response11 = request11.execute()
 
 
 
